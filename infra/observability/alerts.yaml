@@ -1,0 +1,28 @@
+groups:
+  - name: strefa
+    rules:
+      - alert: APIDown
+        expr: up{job="api"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: 'API Strefy Treningów nie odpowiada'}
+      - alert: JobsFailed
+        expr: strefa_jobs_failed > 0
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: 'Zadania wymagają interwencji w panelu administratora'}
+      - alert: QueueDelayed
+        expr: strefa_jobs_oldest_seconds > 600
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: 'Kolejka opóźniona o ponad 10 minut'}
+      - alert: BackupMissing
+        expr: time() - strefa_backup_last_success_seconds > 93600 or absent(strefa_backup_last_success_seconds)
+        for: 15m
+        labels: {severity: critical}
+        annotations: {summary: 'Brak poprawnej kopii zapasowej w ciągu 26 godzin'}
+      - alert: APIErrors
+        expr: sum(rate(strefa_http_errors_total[5m])) / clamp_min(sum(rate(strefa_http_requests_total[5m])),0.001) > 0.05
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: 'Ponad 5% żądań API kończy się błędem serwera'}

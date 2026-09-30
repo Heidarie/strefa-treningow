@@ -1,0 +1,12 @@
+services:
+  api:
+    environment:
+      TRUST_PROXY: 'true'
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  worker:
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  mailpit:
+    profiles: [local-mail]
+  alertmanager:
+    volumes: ['./infra/observability/alertmanager.generated.json:/etc/alertmanager/alertmanager.yml:ro']

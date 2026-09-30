@@ -1,0 +1,8 @@
+[Unit]
+Description=Strefa Treningow off-server backup
+Requires=docker.service
+After=docker.service
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/strefa-treningow
+ExecStart=/opt/strefa-treningow/scripts/backup.sh

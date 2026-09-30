@@ -1,0 +1,11 @@
+.env
+node_modules/
+.nuxt/
+.output/
+coverage/
+.DS_Store
+backups/
+*.log
+test-results/
+playwright-report/
+infra/observability/alertmanager.generated.json

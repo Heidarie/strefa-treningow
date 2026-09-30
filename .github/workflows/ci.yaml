@@ -1,0 +1,30 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env: {POSTGRES_USER: strefa, POSTGRES_PASSWORD: strefa, POSTGRES_DB: strefa}
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U strefa" --health-interval 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: '1.27.1', cache-dependency-path: backend/go.sum}
+      - run: go test -race ./...
+        working-directory: backend
+        env: {TEST_DATABASE_URL: 'postgres://strefa:strefa@localhost:5432/strefa?sslmode=disable'}
+      - run: go vet ./...
+        working-directory: backend
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: frontend}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22', cache: npm, cache-dependency-path: frontend/package-lock.json}
+      - run: npm ci
+      - run: npm run generate:api && git diff --exit-code types/api.d.ts
+      - run: npm run typecheck && npm test && npm run build

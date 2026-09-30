@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: {endpoint: '0.0.0.0:4317'}
+      http: {endpoint: '0.0.0.0:4318'}
+  filelog:
+    include: ['/var/log/strefa/*.log*']
+    exclude: []
+    start_at: end
+    operators:
+      - type: json_parser
+        parse_from: body
+        parse_to: attributes
+      - type: move
+        from: attributes["service.name"]
+        to: resource["service.name"]
+      - type: move
+        from: attributes.msg
+        to: body
+processors:
+  batch: {}
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+exporters:
+  otlphttp/tempo: {endpoint: 'http://tempo:4318', tls: {insecure: true}}
+  otlphttp/loki: {endpoint: 'http://loki:3100/otlp', tls: {insecure: true}}
+  prometheus: {endpoint: '0.0.0.0:8889'}
+service:
+  pipelines:
+    traces: {receivers: [otlp], processors: [memory_limiter, batch], exporters: [otlphttp/tempo]}
+    metrics: {receivers: [otlp], processors: [memory_limiter, batch], exporters: [prometheus]}
+    logs: {receivers: [filelog, otlp], processors: [memory_limiter, batch], exporters: [otlphttp/loki]}
